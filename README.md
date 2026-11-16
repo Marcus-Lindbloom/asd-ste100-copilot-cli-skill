@@ -1,8 +1,20 @@
-# ASD-STE100 Skill — Simplified Technical English for Agent Output
+# ASD-STE100 Skill for GitHub Copilot CLI — Simplified Technical English for Agent Output
 
-A Claude Code skill that rewrites dense, ambiguous English into [ASD-STE100 Simplified Technical English](https://www.asd-ste100.org/) (STE) — the controlled-language standard the aerospace and defense industry built so aircraft maintenance instructions cannot be misread.
+A [GitHub Copilot CLI](https://github.com/features/copilot/cli) skill that rewrites dense, ambiguous English into [ASD-STE100 Simplified Technical English](https://www.asd-ste100.org/) (STE) — the controlled-language standard the aerospace and defense industry built so aircraft maintenance instructions cannot be misread.
 
 This skill repurposes that same discipline for a different reader: an **AI agent** parsing another agent's output, a tool description, an error message, or an inter-agent instruction, with no human in the loop to resolve ambiguity.
+
+## Credit
+
+This repo is a Copilot CLI port of [danyuchn/asd-ste100-skill](https://github.com/danyuchn/asd-ste100-skill), created by **Dustin Yuchen Teng** ([@danyuchn](https://github.com/danyuchn)) and its contributors. The original is a Claude Code skill. All credit for the skill, the rules, the examples, and the linter goes to the original author and contributors. The upstream commit history is kept in this repo.
+
+What changed for Copilot CLI:
+
+- The installation steps install the skill into the Copilot CLI personal skills directory (`~/.copilot/skills/`).
+- The `.claude-plugin/` manifests are removed.
+- The README has an optional section that makes STE the default output style for every Copilot CLI session.
+
+`SKILL.md`, `references/`, `examples/`, and `scripts/ste-lint.py` are the same as upstream. To report a problem with the skill itself, open an issue on the [original repo](https://github.com/danyuchn/asd-ste100-skill/issues).
 
 ## Why STE, and Why for Agents
 
@@ -49,25 +61,88 @@ Full rule summary and citations: [`references/writing-rules.md`](references/writ
 
 ## Installation
 
-### Quick Install (npx skills)
-
-The fastest way to install this skill is the [skills CLI](https://skills.sh/) — no clone, no path setup. Run it from your project root:
+Copilot CLI discovers personal skills in `~/.copilot/skills/<name>/SKILL.md`. Clone this repo into that directory:
 
 ```bash
-npx skills add danyuchn/asd-ste100-skill
+git clone https://github.com/Marcus-Lindbloom/asd-ste100-copilot-cli-skill ~/.copilot/skills/asd-ste100
 ```
 
-This pulls the skill from the GitHub repo and installs it for the current project. The CLI sends anonymous install telemetry (skill name and timestamp, no personal or device information) to help rank skills on the skills.sh leaderboard. Set `DISABLE_TELEMETRY=1` to opt out.
+The skill is then available in every Copilot CLI session and every project.
 
-Update later with `npx skills update`.
-
-### Clone
+To install the skill for one project only, clone it into the project's `.github/skills/` directory:
 
 ```bash
-git clone https://github.com/danyuchn/asd-ste100-skill ~/.claude/skills/asd-ste100
+git clone https://github.com/Marcus-Lindbloom/asd-ste100-copilot-cli-skill .github/skills/asd-ste100
 ```
 
-This clones the repo into `~/.claude/skills/`, making the skill available in every Claude Code project. Best for contributors and anyone who wants a live checkout that updates with `git pull`.
+### Verify
+
+```bash
+copilot skill list | grep asd-ste100
+```
+
+In an interactive session, `/skills list` or `/env` also shows the skill. Start a new session after you install the skill.
+
+### Update
+
+```bash
+git -C ~/.copilot/skills/asd-ste100 pull
+```
+
+### Remove
+
+```bash
+rm -rf ~/.copilot/skills/asd-ste100
+```
+
+### Optional: make STE the default output style
+
+A skill loads only when a request matches its description. To make Copilot CLI write every response in STE style, add a section to your personal instructions file, `~/.copilot/copilot-instructions.md`. Copilot CLI loads this file in every session. Check with `copilot instruction list`.
+
+Example section:
+
+```markdown
+# Output style: ASD-STE100 (Simplified Technical English)
+
+Write every response to the user in STE style. Also use STE style for commit
+messages, PR descriptions, code comments, error messages, tool descriptions,
+and prompts for sub-agents. The full rule set is in the `asd-ste100` skill at
+`~/.copilot/skills/asd-ste100/SKILL.md`. Load that skill when you rewrite text
+or when you write text that another agent or tool will parse.
+
+Modes:
+- Chat responses, READMEs, PR descriptions, and docs use STE-flavored mode.
+  Apply the structural rules in full. Treat the lexical rules as advisory.
+- Error messages, tool descriptions, sub-agent prompts, procedures, and safety
+  text use Strict mode. Apply all rules.
+
+Structural rules (always apply):
+1. Use active voice. Name the actor.
+2. Write one instruction per sentence.
+3. Keep instructions at 20 words or fewer. Keep descriptions at 25 words or fewer.
+4. Do not use semicolons. Write separate sentences.
+5. Do not use phrasal verbs ("spin up", "kick off", "reach out"). Use one plain verb.
+6. Do not stack more than 3 nouns as one noun phrase.
+7. Do not drop the subject, verb, or article to save space.
+8. Use simple tenses. Keep a compound tense only when it carries information,
+   for example "may have failed" or "has completed" (output available now).
+9. Write one topic per paragraph, with 6 sentences or fewer.
+10. Use a numbered or bulleted list for 3 or more steps or conditions.
+11. Use the verb, not the noun form ("analyze", not "perform an analysis").
+12. Use one name for one thing in a response. Do not rotate synonyms.
+13. Do not use marketing adjectives (seamless, robust, powerful).
+14. Do not stack hedges. State the claim, or delete it.
+
+Content rules (always apply):
+- Keep every hedge at its original strength. Do not change "may" to "will".
+- Do not add a fact, cause, or certainty that the evidence does not support.
+- Keep safety conditions, scope qualifiers, and numbers, even if the sentence
+  becomes longer.
+- Do not apply STE to code, command output, quoted text, or file content that
+  must stay verbatim.
+```
+
+The 14 structural rules repeat the rules in `SKILL.md` as a summary, so Copilot can apply them without loading the skill first.
 
 ## Usage
 
@@ -79,9 +154,16 @@ Rewrite this error message so an agent can't misparse it
 Apply ASD-STE100 to this instruction
 ```
 
-Or paste text and ask Claude to "disambiguate this" / "apply STE100 to this" / "reduce ambiguity in this output."
+Or paste text and ask Copilot to "disambiguate this" / "apply STE100 to this" / "reduce ambiguity in this output." You can also run `/asd-ste100` in an interactive session.
 
 You get the rewritten text back and nothing else. To see which rules were applied, add "show the diff" or "explain the changes" to the request.
+
+To run the linter directly:
+
+```bash
+python3 ~/.copilot/skills/asd-ste100/scripts/ste-lint.py path/to/file.md
+python3 ~/.copilot/skills/asd-ste100/scripts/ste-lint.py --selftest
+```
 
 ## Scope
 
@@ -110,4 +192,4 @@ One limit worth stating up front: this fixes the form of a text, not its substan
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). The original copyright notice by Dustin Yuchen Teng is kept, as the MIT license requires.
